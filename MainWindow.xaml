@@ -1,0 +1,255 @@
+<Window x:Class="KeySpammer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="KeySpammer"
+        Icon="icon.ico"
+        Height="212" Width="222"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        Topmost="True"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="Panel" Color="#161616"/>
+        <SolidColorBrush x:Key="PanelBorder" Color="#2A2A2A"/>
+        <SolidColorBrush x:Key="FieldBg" Color="#1E1E1E"/>
+        <SolidColorBrush x:Key="FieldBorder" Color="#333333"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#9A9A9A"/>
+        <SolidColorBrush x:Key="TextMain" Color="#EDEDED"/>
+        <SolidColorBrush x:Key="Accent" Color="#4ADE80"/>
+        <SolidColorBrush x:Key="AccentDim" Color="#2E8B57"/>
+
+        <!-- Dark text box -->
+        <Style x:Key="DarkTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="{StaticResource FieldBg}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource FieldBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="6,3"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="CaretBrush" Value="{StaticResource Accent}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="5">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Flat dark button with hover -->
+        <Style x:Key="DarkButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource FieldBg}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource FieldBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#282828"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="#444444"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#141414"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Borderless icon button (close X) -->
+        <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource DarkButton}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+        </Style>
+
+        <!-- Fully dark ComboBox: default WPF combobox renders its popup with
+             the OS theme (white list on a dark app looks broken), so this
+             re-templates the toggle box AND the dropdown popup. -->
+        <Style x:Key="DarkComboBox" TargetType="ComboBox">
+            <Setter Property="Background" Value="{StaticResource FieldBg}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource FieldBorder}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="6,3"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="MaxDropDownHeight" Value="180"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton x:Name="Toggle"
+                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                          Focusable="False" ClickMode="Press">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="{StaticResource FieldBg}"
+                                                BorderBrush="{StaticResource FieldBorder}"
+                                                BorderThickness="1" CornerRadius="5">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="18"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Path Grid.Column="1" Data="M0,0 L4,4 L8,0 Z" Fill="{StaticResource TextMuted}"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <ContentPresenter x:Name="ContentSite" IsHitTestVisible="False"
+                                               Content="{TemplateBinding SelectionBoxItem}"
+                                               Margin="{TemplateBinding Padding}"
+                                               VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                            <Popup x:Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
+                                <!-- NOTE: TemplateBinding does not resolve for elements inside a
+                                     Popup's content (it renders in a separate visual tree), so width
+                                     and max-height here use ElementName / a fixed value instead of
+                                     TemplateBinding. Using TemplateBinding here would silently
+                                     produce an unstyled, wrongly-sized dropdown. -->
+                                <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource FieldBorder}"
+                                        BorderThickness="1" CornerRadius="5" Margin="0,3,0,0"
+                                        MinWidth="{Binding ActualWidth, ElementName=Toggle}">
+                                    <ScrollViewer MaxHeight="180">
+                                        <ItemsPresenter/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
+                        <Setter Property="Padding" Value="6,3"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ComboBoxItem">
+                                    <Border x:Name="Bd" Background="Transparent" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsHighlighted" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="#2A2A2A"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentDim}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border Background="{StaticResource Panel}" CornerRadius="10" BorderBrush="{StaticResource PanelBorder}" BorderThickness="1">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="18" ShadowDepth="3" Opacity="0.4" Color="Black"/>
+        </Border.Effect>
+        <Grid Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="8"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="1"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="8"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Title bar -->
+            <Grid Grid.Row="0">
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="6" Height="6" Fill="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="KEY SPAMMER" Foreground="{StaticResource TextMain}"
+                               FontSize="11.5" FontWeight="Bold" FontFamily="Segoe UI Semibold"/>
+                </StackPanel>
+                <Button Content="✕" Width="18" Height="16" Padding="0" FontSize="10"
+                        Style="{StaticResource IconButton}"
+                        HorizontalAlignment="Right" VerticalAlignment="Top"
+                        Click="CloseButton_Click"/>
+            </Grid>
+
+            <!-- Key selector: full keyboard list, scrollable. Click and type
+                 a letter to jump to matches (e.g. "F" cycles F1, F2, F3...) -->
+            <Grid Grid.Row="2" Margin="0,0,0,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="54"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Key" Foreground="{StaticResource TextMuted}"
+                           FontSize="10.5" VerticalAlignment="Center"/>
+                <ComboBox Grid.Column="1" x:Name="KeyCombo" Style="{StaticResource DarkComboBox}"
+                          SelectionChanged="KeyCombo_SelectionChanged"/>
+            </Grid>
+
+            <!-- KPS field -->
+            <Grid Grid.Row="3" Margin="0,0,0,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="54"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="KPS" Foreground="{StaticResource TextMuted}"
+                           FontSize="10.5" VerticalAlignment="Center"/>
+                <TextBox Grid.Column="1" x:Name="KpsBox" Text="10" Style="{StaticResource DarkTextBox}"
+                          TextChanged="KpsBox_TextChanged"/>
+            </Grid>
+
+            <!-- divider -->
+            <Rectangle Grid.Row="4" Fill="{StaticResource PanelBorder}" Height="1"/>
+
+            <!-- Status row -->
+            <Grid Grid.Row="5" Margin="0,6,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="54"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Status" Foreground="{StaticResource TextMuted}" FontSize="10.5"/>
+                <TextBlock Grid.Column="1" x:Name="StatusText" Text="READY" Foreground="#777" FontWeight="Bold" FontSize="11.5"/>
+            </Grid>
+
+            <!-- Live KPS row -->
+            <Grid Grid.Row="6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="54"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Live KPS" Foreground="{StaticResource TextMuted}" FontSize="10.5"/>
+                <TextBlock Grid.Column="1" x:Name="KpsText" Text="0.0" Foreground="{StaticResource Accent}"
+                           FontWeight="Bold" FontSize="11.5"/>
+            </Grid>
+
+            <!-- Toggle button -->
+            <Button Grid.Row="8" x:Name="ToggleButton" Content="OFF · XButton1"
+                    Height="26" Style="{StaticResource DarkButton}" Click="ToggleButton_Click"
+                    FontSize="11"/>
+        </Grid>
+    </Border>
+</Window>

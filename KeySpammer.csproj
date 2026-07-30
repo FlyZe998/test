@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>KeySpammer</AssemblyName>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <NeutralLanguage>en-US</NeutralLanguage>
+
+    <!-- Single-file, self-contained publish so you don't need .NET installed on target machine -->
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+
+    <!-- Performance: `dotnet run` defaults to Debug, which disables JIT
+         optimization outright, which matters more for a tight timing loop
+         than anything below. Forcing it here means `dotnet run` alone gets
+         optimized code without needing -c Release. -->
+    <Optimize>true</Optimize>
+    <TieredCompilationQuickJit>false</TieredCompilationQuickJit>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="icon.ico" />
+  </ItemGroup>
+
+</Project>
